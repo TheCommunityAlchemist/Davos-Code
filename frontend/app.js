@@ -10,11 +10,11 @@
 
 // TODO: Replace with your actual values
 const CONFIG = {
-    // Your Railway API URL (update after deployment)
-    API_URL: 'https://davos-code-production.up.railway.app',
+    // Your Railway API URL (use localhost:8080 for local testing)
+    API_URL: 'http://localhost:8080',
     
-    // Your Mapbox Access Token
-    MAPBOX_TOKEN: 'YOUR_MAPBOX_TOKEN',
+    // Your Mapbox Access Token - Get one free at https://mapbox.com
+    MAPBOX_TOKEN: 'pk.eyJ1IjoiZmxvd2J5ZnJhbnMiLCJhIjoiY21qNGU1Mm1kMTl1ODNsc2Y2YXc3dDk2NyJ9.5b6Qxwv-34lhKczdCq6oUw',
     
     // Davos coordinates
     DAVOS_CENTER: [9.8360, 46.8027],
@@ -336,7 +336,22 @@ function displayRecommendations(recommendations) {
 function initFilters() {
     const chipsContainer = document.getElementById('filter-chips');
     
-    // Get unique tracks
+    // FIX: Clear the container first (removes hardcoded "All Events" button)
+    chipsContainer.innerHTML = '';
+    
+    // Add "All Events" button first
+    const allChip = document.createElement('button');
+    allChip.className = 'chip active';
+    allChip.dataset.filter = 'all';
+    allChip.textContent = 'All Events';
+    allChip.onclick = () => {
+        document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+        allChip.classList.add('active');
+        resetMarkers();
+    };
+    chipsContainer.appendChild(allChip);
+    
+    // Get unique tracks and add chips
     const tracks = [...new Set(allEvents.map(e => e.track))].sort();
     
     tracks.forEach(track => {
@@ -380,4 +395,3 @@ function showLoading(show) {
     overlay.classList.toggle('active', show);
     document.getElementById('recommend-btn').disabled = show;
 }
-

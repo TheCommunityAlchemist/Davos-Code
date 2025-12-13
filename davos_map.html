@@ -1,0 +1,1999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAVOS 2026 | Interactive Event Navigator</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --alpine-dark: #0a1628;
+            --glacier-blue: #1a4a6e;
+            --snow-white: #f8fafc;
+            --frost: #e2e8f0;
+            --aurora-green: #10b981;
+            --aurora-cyan: #06b6d4;
+            --sunset-amber: #f59e0b;
+            --alpine-rose: #f43f5e;
+            --mist: rgba(255, 255, 255, 0.05);
+            --shadow: rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--alpine-dark);
+            color: var(--snow-white);
+            overflow: hidden;
+        }
+
+        /* === HEADER === */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(180deg, var(--alpine-dark) 0%, transparent 100%);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--aurora-cyan), var(--aurora-green));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--snow-white), var(--frost));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 0.7rem;
+            color: var(--aurora-cyan);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .nav-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--aurora-cyan), var(--aurora-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.65rem;
+            color: var(--frost);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* === MAIN CONTAINER === */
+        .main-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: 420px;
+            background: linear-gradient(180deg, rgba(10, 22, 40, 0.98), rgba(26, 74, 110, 0.3));
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 6rem 1.5rem 1.5rem;
+            overflow-y: auto;
+            z-index: 500;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: var(--glacier-blue);
+            border-radius: 3px;
+        }
+
+        /* === SEARCH === */
+        .search-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .search-label {
+            font-size: 0.7rem;
+            color: var(--aurora-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--snow-white);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--aurora-cyan);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            opacity: 0.5;
+        }
+
+        /* === PROFILE INPUT === */
+        .profile-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .profile-textarea {
+            width: 100%;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--snow-white);
+            outline: none;
+            resize: vertical;
+            min-height: 80px;
+            transition: all 0.3s ease;
+        }
+
+        .profile-textarea:focus {
+            border-color: var(--aurora-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .linkedin-input-wrapper {
+            position: relative;
+            margin-bottom: 0.75rem;
+        }
+
+        .linkedin-input {
+            width: 100%;
+            padding: 0.875rem 1rem 0.875rem 2.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--snow-white);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .linkedin-input:focus {
+            border-color: #0A66C2;
+            box-shadow: 0 0 20px rgba(10, 102, 194, 0.3);
+        }
+
+        .linkedin-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .linkedin-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #0A66C2;
+            color: white;
+            font-weight: 700;
+            font-size: 0.7rem;
+            padding: 0.15rem 0.3rem;
+            border-radius: 3px;
+        }
+
+        .or-divider {
+            display: flex;
+            align-items: center;
+            margin: 0.75rem 0;
+            color: var(--frost);
+            opacity: 0.5;
+            font-size: 0.7rem;
+        }
+
+        .or-divider::before,
+        .or-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .or-divider span {
+            padding: 0 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .linkedin-status {
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--aurora-cyan);
+            min-height: 1.2rem;
+        }
+
+        .linkedin-status.success {
+            color: var(--aurora-green);
+        }
+
+        .linkedin-status.processing {
+            color: var(--sunset-amber);
+        }
+
+        .recommend-btn {
+            width: 100%;
+            padding: 0.875rem;
+            margin-top: 0.75rem;
+            background: linear-gradient(135deg, var(--aurora-cyan), var(--aurora-green));
+            border: none;
+            border-radius: 10px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--alpine-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .recommend-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(6, 182, 212, 0.4);
+        }
+
+        /* === FILTERS === */
+        .filters {
+            margin-bottom: 1.5rem;
+        }
+
+        .filter-group {
+            margin-bottom: 1rem;
+        }
+
+        .filter-label {
+            font-size: 0.7rem;
+            color: var(--aurora-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .filter-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .chip {
+            padding: 0.5rem 0.875rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chip:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chip.active {
+            background: linear-gradient(135deg, var(--aurora-cyan), var(--aurora-green));
+            color: var(--alpine-dark);
+            border-color: transparent;
+            font-weight: 500;
+        }
+
+        /* === EVENT LIST === */
+        .events-section {
+            flex: 1;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Instrument Serif', serif;
+            font-size: 1.25rem;
+            font-style: italic;
+            color: var(--frost);
+        }
+
+        .event-count {
+            font-size: 0.75rem;
+            color: var(--aurora-cyan);
+        }
+
+        .event-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .event-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: var(--aurora-cyan);
+            transform: translateX(4px);
+        }
+
+        .event-card.highlighted {
+            border-color: var(--aurora-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--snow-white);
+            line-height: 1.3;
+            flex: 1;
+        }
+
+        .event-score {
+            background: linear-gradient(135deg, var(--aurora-cyan), var(--aurora-green));
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--alpine-dark);
+            margin-left: 0.5rem;
+        }
+
+        .event-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.7rem;
+            color: var(--frost);
+            opacity: 0.7;
+        }
+
+        .event-meta span {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .event-track {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background: rgba(6, 182, 212, 0.2);
+            border-radius: 4px;
+            font-size: 0.65rem;
+            color: var(--aurora-cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .event-description {
+            font-size: 0.75rem;
+            color: var(--frost);
+            opacity: 0.6;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .event-address {
+            font-size: 0.65rem;
+            color: var(--aurora-cyan);
+            opacity: 0.7;
+            margin-bottom: 0.5rem;
+            font-style: italic;
+        }
+
+        .event-link {
+            background: rgba(6, 182, 212, 0.2);
+            padding: 0.25rem 0.4rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.7rem;
+            transition: all 0.3s ease;
+        }
+
+        .event-link:hover {
+            background: rgba(6, 182, 212, 0.4);
+        }
+
+        /* === MAP === */
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Leaflet customization */
+        .leaflet-tile {
+            filter: saturate(0.3) brightness(0.8) contrast(1.1);
+        }
+
+        .custom-marker {
+            background: linear-gradient(135deg, var(--aurora-cyan), var(--aurora-green));
+            border: 3px solid var(--snow-white);
+            border-radius: 50%;
+            box-shadow: 0 4px 20px rgba(6, 182, 212, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .custom-marker:hover {
+            transform: scale(1.2);
+        }
+
+        .custom-marker.highlighted {
+            background: var(--alpine-rose);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.5); }
+            50% { box-shadow: 0 0 0 15px rgba(244, 63, 94, 0); }
+        }
+
+        .leaflet-popup-content-wrapper {
+            background: rgba(10, 22, 40, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 0;
+            backdrop-filter: blur(10px);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            color: var(--snow-white);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(10, 22, 40, 0.95);
+        }
+
+        .popup-content {
+            padding: 1rem;
+            min-width: 280px;
+        }
+
+        .popup-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-meta {
+            font-size: 0.75rem;
+            color: var(--frost);
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-description {
+            font-size: 0.75rem;
+            color: var(--frost);
+            line-height: 1.5;
+        }
+
+        /* === NAVIGATION TRACKER === */
+        .nav-tracker {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(10, 22, 40, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+
+        .tracker-title {
+            font-size: 0.7rem;
+            color: var(--aurora-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .tracker-log {
+            max-height: 120px;
+            overflow-y: auto;
+            font-size: 0.7rem;
+        }
+
+        .tracker-entry {
+            padding: 0.25rem 0;
+            color: var(--frost);
+            opacity: 0.7;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .tracker-entry:last-child {
+            border-bottom: none;
+        }
+
+        .tracker-time {
+            color: var(--aurora-green);
+            margin-right: 0.5rem;
+        }
+
+        /* === LOADING === */
+        .loading {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--mist);
+            border-top-color: var(--aurora-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .nav-stats {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🏔️</div>
+            <div class="logo-text">
+                <h1>DAVOS 2026</h1>
+                <span>Interactive Event Navigator</span>
+            </div>
+        </div>
+        <div class="nav-stats">
+            <div class="stat">
+                <div class="stat-value" id="total-events">20</div>
+                <div class="stat-label">Events</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="total-tracks">6</div>
+                <div class="stat-label">Tracks</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="total-venues">3</div>
+                <div class="stat-label">Venues</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- LinkedIn / Profile Input -->
+            <div class="profile-container">
+                <label class="search-label">🔗 LinkedIn URL or Profile</label>
+                <div class="linkedin-input-wrapper">
+                    <input type="text" class="linkedin-input" id="linkedin-input" 
+                        placeholder="linkedin.com/in/yourname">
+                    <span class="linkedin-icon">in</span>
+                </div>
+                <div class="or-divider">
+                    <span>or paste your About section</span>
+                </div>
+                <textarea class="profile-textarea" id="profile-input" 
+                    placeholder="Paste your LinkedIn 'About' section here, or describe your interests...
+
+Example: 'Climate scientist with 10+ years in carbon markets. Interested in blockchain for emissions tracking, international policy cooperation, and sustainable finance.'"></textarea>
+                <button class="recommend-btn" onclick="getRecommendations()">
+                    ✨ Get Personalized Recommendations
+                </button>
+                <div class="linkedin-status" id="linkedin-status"></div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-container">
+                <label class="search-label">Quick Search</label>
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" class="search-input" id="search-input" 
+                        placeholder="Search events..." oninput="filterEvents()">
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="filters">
+                <div class="filter-group">
+                    <label class="filter-label">Filter by Track</label>
+                    <div class="filter-chips" id="track-filters">
+                        <span class="chip active" data-track="all">All Tracks</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event List -->
+            <div class="events-section">
+                <div class="section-header">
+                    <h2 class="section-title">Upcoming Events</h2>
+                    <span class="event-count" id="visible-count">20 events</span>
+                </div>
+                <div class="event-list" id="event-list">
+                    <!-- Events populated by JS -->
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map -->
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Navigation Tracker -->
+    <div class="nav-tracker">
+        <div class="tracker-title">📊 Navigation Tracker</div>
+        <div class="tracker-log" id="tracker-log">
+            <div class="tracker-entry">
+                <span class="tracker-time">--:--</span>
+                Ready to track...
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // =============================================
+        // DAVOS 2026 REAL EVENT DATA
+        // =============================================
+        const events = [
+            // AI & TECHNOLOGY HOUSES
+            {
+                id: "WEF2026-001",
+                title: "AI House Davos 2026: A Human Intelligence Shift",
+                description: "AI House Davos brings together global leaders to explore the intersection of artificial intelligence and human potential. Three floors of immersive experiences and discussions.",
+                topics: ["Artificial Intelligence", "Human Intelligence", "AI Ethics", "Innovation", "Technology"],
+                location: "Promenade 67",
+                venue: "AI House Davos",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 500,
+                track: "Technology & AI",
+                lat: 46.8010,
+                lon: 9.8358,
+                address: "Promenade 67, Davos, 7270, Switzerland",
+                website: "https://www.aihousedavos.com/2026"
+            },
+            {
+                id: "WEF2026-002",
+                title: "Imagination in Action: The Inflection of Intelligence",
+                description: "The Inflection of Intelligence: Our World Reimagined. Exploring how AI is transforming every aspect of our lives and society at the iconic Dome.",
+                topics: ["Artificial Intelligence", "Imagination", "Innovation", "Future of Society", "Digital Transformation"],
+                location: "Promenade 80",
+                venue: "The Iconic Dome (Panorama Hotel)",
+                startTime: "2026-01-20 09:00",
+                endTime: "2026-01-22 18:00",
+                speakers: [],
+                capacity: 400,
+                track: "Technology & AI",
+                lat: 46.8020,
+                lon: 9.8365,
+                address: "Promenade 80, Davos Platz, 7270, Switzerland",
+                website: "https://www.imaginationinaction.co/davos-jan-2026"
+            },
+            {
+                id: "WEF2026-031",
+                title: "C3 AI at Davos 2026",
+                description: "Enterprise AI solutions and applications for business transformation.",
+                topics: ["Enterprise AI", "Business Transformation", "Data Science", "Automation"],
+                location: "Davos",
+                venue: "C3 AI Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 150,
+                track: "Technology & AI",
+                lat: 46.8022,
+                lon: 9.8363,
+                address: "Davos, Switzerland",
+                website: "https://c3.ai/events/c3-ai-at-davos-2026/"
+            },
+            // BLOCKCHAIN & WEB3
+            {
+                id: "WEF2026-003",
+                title: "Web3 Hub Davos 2026",
+                description: "The premier gathering for blockchain, crypto, and decentralized technology leaders. Five-minute walk from Davos Platz train station.",
+                topics: ["Blockchain", "Web3", "Cryptocurrency", "DeFi", "Decentralization"],
+                location: "Obere Strasse 33",
+                venue: "Katholische Pfarreizentrum Davos",
+                startTime: "2026-01-19 10:00",
+                endTime: "2026-01-23 17:00",
+                speakers: [],
+                capacity: 300,
+                track: "Blockchain & Web3",
+                lat: 46.7980,
+                lon: 9.8325,
+                address: "Obere Strasse 33, Davos Platz, 7270, Switzerland",
+                website: "https://web3hubdavos.com/"
+            },
+            {
+                id: "WEF2026-023",
+                title: "9th Annual Blockchain Central Davos",
+                description: "The premier blockchain and crypto gathering at Davos, now in its 9th year.",
+                topics: ["Blockchain", "Cryptocurrency", "DeFi", "Web3", "Digital Assets"],
+                location: "Promenade 87",
+                venue: "Bioladen Davos",
+                startTime: "2026-01-19 10:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 250,
+                track: "Blockchain & Web3",
+                lat: 46.8027,
+                lon: 9.8370,
+                address: "Promenade 87, Davos, 7270, Switzerland",
+                website: "https://events.coinpedia.org/9th-annual-blockchain-central-davos-7420/"
+            },
+            {
+                id: "WEF2026-024",
+                title: "Circle at World Economic Forum 2026",
+                description: "Circle's official presence at WEF - by appointment only. Stablecoins, USDC, and digital currency discussions.",
+                topics: ["Stablecoins", "USDC", "Digital Currency", "Fintech", "Payments"],
+                location: "Promenade 83",
+                venue: "Circle HQ",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 100,
+                track: "Blockchain & Web3",
+                lat: 46.8023,
+                lon: 9.8367,
+                address: "Promenade 83, Davos Platz, 7270, Switzerland",
+                website: "https://www.circle.com/davos"
+            },
+            // OFFICIAL WEF & CONGRESS CENTRE
+            {
+                id: "WEF2026-004",
+                title: "WEF Open Forum",
+                description: "Open to the public forum for dialogue on global issues. Held at the auditorium of the Swiss Alpine School.",
+                topics: ["Global Issues", "Public Dialogue", "Democracy", "Civic Engagement", "Open Forum"],
+                location: "Guggerbachstrasse 3",
+                venue: "Swiss Alpine School",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 600,
+                track: "Economy & Society",
+                lat: 46.7975,
+                lon: 9.8320,
+                address: "Guggerbachstrasse 3, Davos-Klosters, 7270, Switzerland",
+                website: "https://www.weforum.org/open-forum/"
+            },
+            {
+                id: "WEF2026-015",
+                title: "World Immune Regulation Meeting XX",
+                description: "20th annual scientific meeting on immunology, immune regulation, and therapeutic applications.",
+                topics: ["Immunology", "Healthcare", "Medical Research", "Therapeutics", "Science"],
+                location: "Talstrasse 49A",
+                venue: "Davos Congress Center",
+                startTime: "2026-03-11 08:00",
+                endTime: "2026-03-14 18:00",
+                speakers: [],
+                capacity: 400,
+                track: "Health & Science",
+                lat: 46.8027,
+                lon: 9.8360,
+                address: "Talstrasse 49A, Davos, 7270, Switzerland",
+                website: "https://www.wirm.ch/registration-abstracts/"
+            },
+            {
+                id: "WEF2026-021",
+                title: "56th IDKD Davos 2026",
+                description: "International Diagnostic Course in Davos - premier radiology and medical imaging education.",
+                topics: ["Radiology", "Medical Imaging", "Healthcare", "Education", "Diagnostics"],
+                location: "Talstrasse 49A",
+                venue: "Congress Centre Davos",
+                startTime: "2026-01-19 08:00",
+                endTime: "2026-01-23 17:00",
+                speakers: [],
+                capacity: 500,
+                track: "Health & Science",
+                lat: 46.8027,
+                lon: 9.8360,
+                address: "Talstrasse 49A, Davos, 7270, Switzerland",
+                website: "https://www.idkd.org/courses/56th-idkd-davos-2026/"
+            },
+            // FINANCE & INVESTMENT
+            {
+                id: "WEF2026-010",
+                title: "EMTECH INVEST 2026",
+                description: "Emerging technology investment summit exploring AI, biotech, cleantech, and frontier technologies.",
+                topics: ["Emerging Technology", "Investment", "AI", "Biotech", "Cleantech"],
+                location: "Promenade 89",
+                venue: "Grand Hotel Belvédère",
+                startTime: "2026-01-20 08:00",
+                endTime: "2026-01-22 18:00",
+                speakers: [],
+                capacity: 300,
+                track: "Finance & Technology",
+                lat: 46.8089,
+                lon: 9.8376,
+                address: "Promenade 89, Davos, 7270, Switzerland",
+                website: "https://2026.emtechinvest.com/"
+            },
+            {
+                id: "WEF2026-019",
+                title: "Monaco Day 2026",
+                description: "Monaco's official presence at Davos showcasing innovation, finance, and Mediterranean partnerships.",
+                topics: ["Monaco", "Finance", "Innovation", "Mediterranean", "Partnerships"],
+                location: "Talstrasse 52",
+                venue: "Monaco House Davos / Hotel Cresta Sun",
+                startTime: "2026-01-21 09:00",
+                endTime: "2026-01-21 18:00",
+                speakers: [],
+                capacity: 200,
+                track: "Finance & Innovation",
+                lat: 46.8030,
+                lon: 9.8355,
+                address: "Talstrasse 52, Davos, 7270, Switzerland",
+                website: "https://www.monacohousedavos.com/e/monaco-day-2026/signup"
+            },
+            // HEALTH & LONGEVITY
+            {
+                id: "WEF2026-009",
+                title: "Longevity Investors Lunch",
+                description: "Exclusive gathering for investors focused on longevity science, healthspan extension, and age-tech opportunities.",
+                topics: ["Longevity", "Investment", "Healthspan", "Aging", "Biotech"],
+                location: "Promenade 159",
+                venue: "Precise Tale Seehof Davos",
+                startTime: "2026-01-22 12:00",
+                endTime: "2026-01-22 15:00",
+                speakers: [],
+                capacity: 80,
+                track: "Health & Longevity",
+                lat: 46.8130,
+                lon: 9.8500,
+                address: "Promenade 159, Davos, 7260, Switzerland",
+                website: "https://www.longevityinvestors.ch/davos-2026"
+            },
+            {
+                id: "WEF2026-017",
+                title: "The Brain House Davos 2026",
+                description: "Focusing on brain health, Alzheimer's research, and neuroscience innovations during WEF Annual Meeting.",
+                topics: ["Brain Health", "Alzheimers", "Neuroscience", "Healthcare", "Research"],
+                location: "Davos-Klosters",
+                venue: "The Brain House",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 180,
+                track: "Health & Science",
+                lat: 46.8040,
+                lon: 9.8380,
+                address: "Davos-Klosters, Switzerland",
+                website: "https://www.davosalzheimerscollaborative.org/brainhouse-davos-2026"
+            },
+            {
+                id: "WEF2026-038",
+                title: "Health In Tech Summit Davos 2026",
+                description: "Healthcare technology innovation, digital health, and medical breakthroughs.",
+                topics: ["HealthTech", "Digital Health", "Medical Innovation", "Healthcare", "Technology"],
+                location: "Davos",
+                venue: "Health In Tech Venue",
+                startTime: "2026-01-20 09:00",
+                endTime: "2026-01-22 18:00",
+                speakers: [],
+                capacity: 220,
+                track: "Health & Technology",
+                lat: 46.8045,
+                lon: 9.8382,
+                address: "Davos, Switzerland",
+                website: "https://healthintech.investorroom.com/"
+            },
+            // CLIMATE & SUSTAINABILITY
+            {
+                id: "WEF2026-016",
+                title: "REGEN House",
+                description: "Regenerative economy and sustainability focused programming during WEF Annual Meeting.",
+                topics: ["Regenerative Economy", "Sustainability", "Climate", "ESG", "Impact"],
+                location: "Davos",
+                venue: "REGEN House",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 200,
+                track: "Climate & Sustainability",
+                lat: 46.8005,
+                lon: 9.8345,
+                address: "Davos, Switzerland",
+                website: "https://www.regen.house/davos"
+            },
+            {
+                id: "WEF2026-042",
+                title: "World Biodiversity Forum",
+                description: "Global forum on biodiversity conservation, nature-based solutions, and ecosystem restoration.",
+                topics: ["Biodiversity", "Conservation", "Nature", "Ecosystem", "Environment"],
+                location: "Davos",
+                venue: "Biodiversity Forum Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 300,
+                track: "Climate & Sustainability",
+                lat: 46.8055,
+                lon: 9.8393,
+                address: "Davos, Switzerland",
+                website: "https://worldbiodiversityforum.org/registration/"
+            },
+            // SPACE & TECHNOLOGY
+            {
+                id: "WEF2026-011",
+                title: "The Future Space Economy",
+                description: "Why No Company Can Ignore It - exploring commercial space opportunities at the House of Switzerland Crystal Lounge.",
+                topics: ["Space Economy", "Commercial Space", "Satellite Technology", "Space Innovation"],
+                location: "Kurgartenstrasse 6",
+                venue: "House of Switzerland",
+                startTime: "2026-01-21 14:00",
+                endTime: "2026-01-21 16:00",
+                speakers: [],
+                capacity: 150,
+                track: "Space & Technology",
+                lat: 46.8000,
+                lon: 9.8340,
+                address: "Kurgartenstrasse 6, Davos, 7270, Switzerland",
+                website: "https://www.s-ge.com/en/event/s-ge-event/why-no-company-can-ignore-it"
+            },
+            // CYBERSECURITY & TRUST
+            {
+                id: "WEF2026-008",
+                title: "Trust and Convergence Summit",
+                description: "Hosted by WISeKey, WISeSat.Space and SEALSQ exploring trust in digital systems, cybersecurity, and space technology convergence.",
+                topics: ["Cybersecurity", "Trust", "Space Technology", "Digital Identity", "Blockchain"],
+                location: "Promenade 50",
+                venue: "Morosani Schweizerhof",
+                startTime: "2026-01-21 09:00",
+                endTime: "2026-01-21 17:00",
+                speakers: [],
+                capacity: 200,
+                track: "Technology & Security",
+                lat: 46.7997,
+                lon: 9.8347,
+                address: "Promenade 50, Davos, 7270, Switzerland",
+                website: "https://www.wisekey.com/davos26/"
+            },
+            {
+                id: "WEF2026-030",
+                title: "House of Trust Davos Edition",
+                description: "Building trust in a fragmented world - exploring institutional trust and social cohesion.",
+                topics: ["Trust", "Institutions", "Social Cohesion", "Governance", "Leadership"],
+                location: "Davos",
+                venue: "House of Trust",
+                startTime: "2026-01-26 09:00",
+                endTime: "2026-01-26 18:00",
+                speakers: [],
+                capacity: 150,
+                track: "Economy & Society",
+                lat: 46.8018,
+                lon: 9.8358,
+                address: "Davos, Switzerland",
+                website: "https://yeswetrust.com/events"
+            },
+            // INNOVATION & STARTUPS
+            {
+                id: "WEF2026-006",
+                title: "Davos Innovation Week",
+                description: "A week of innovation showcasing cutting-edge technologies and startup ecosystems from around the world.",
+                topics: ["Innovation", "Startups", "Technology", "Entrepreneurship", "Venture Capital"],
+                location: "Oberwiesstrasse 3",
+                venue: "Davos Innovation Center",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 350,
+                track: "Innovation & Startups",
+                lat: 46.7970,
+                lon: 9.8315,
+                address: "Oberwiesstrasse 3, Davos, 7270, Switzerland",
+                website: "https://www.davosinnovationweek.com/apply-here"
+            },
+            {
+                id: "WEF2026-039",
+                title: "Startup Greece Delegation at Davos 2026",
+                description: "Greek startup ecosystem showcase and networking at Davos.",
+                topics: ["Startups", "Greece", "Entrepreneurship", "Innovation", "Mediterranean"],
+                location: "Davos",
+                venue: "Greek Delegation Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 100,
+                track: "Innovation & Startups",
+                lat: 46.8048,
+                lon: 9.8385,
+                address: "Davos, Switzerland",
+                website: "https://www.eventbrite.com/e/startup-greece-delegation-at-davos2026-registration-1975365928668"
+            },
+            {
+                id: "WEF2026-037",
+                title: "Futur.io House Davos 2026",
+                description: "Exploring exponential technologies and the future of humanity.",
+                topics: ["Exponential Technology", "Future", "Innovation", "Foresight", "Transformation"],
+                location: "Davos",
+                venue: "Futur.io House",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 200,
+                track: "Technology & Innovation",
+                lat: 46.8042,
+                lon: 9.8378,
+                address: "Davos, Switzerland",
+                website: "https://www.futur.io/house/davos-2026"
+            },
+            // DIGITAL TRANSFORMATION
+            {
+                id: "WEF2026-012",
+                title: "Digital Lounge @ Davos",
+                description: "Hosted by DMI focusing on data migration, digital transformation, and enterprise technology solutions.",
+                topics: ["Digital Transformation", "Data", "Enterprise Technology", "Cloud", "Migration"],
+                location: "Obere Strasse 20",
+                venue: "Zentrum Guggerbach Davos",
+                startTime: "2026-01-19 10:00",
+                endTime: "2026-01-23 17:00",
+                speakers: [],
+                capacity: 180,
+                track: "Technology & Innovation",
+                lat: 46.7985,
+                lon: 9.8330,
+                address: "Obere Strasse 20, Davos Platz, 7270, Switzerland",
+                website: "https://digitallounge-davos.com/"
+            },
+            // GEOPOLITICS & DIPLOMACY
+            {
+                id: "WEF2026-018",
+                title: "Diplomatic Courier's Davos Dialogues 2026",
+                description: "High-level diplomatic discussions on global affairs, geopolitics, and international cooperation.",
+                topics: ["Diplomacy", "Geopolitics", "International Relations", "Global Affairs", "Policy"],
+                location: "Promenade 63",
+                venue: "Diplomatic Courier Venue",
+                startTime: "2026-01-20 09:00",
+                endTime: "2026-01-22 18:00",
+                speakers: [],
+                capacity: 150,
+                track: "Geopolitics",
+                lat: 46.8005,
+                lon: 9.8355,
+                address: "Promenade 63, Davos Platz, 7270, Switzerland",
+                website: "https://worldin2050.diplomaticourier.com/event/davos-dialogues-2026/"
+            },
+            {
+                id: "WEF2026-035",
+                title: "Foreign Policy FP Davos 2026",
+                description: "Foreign Policy magazine's geopolitical discussions and analysis from Davos.",
+                topics: ["Foreign Policy", "Geopolitics", "International Relations", "Security", "Analysis"],
+                location: "Davos",
+                venue: "FP Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 180,
+                track: "Geopolitics",
+                lat: 46.8032,
+                lon: 9.8365,
+                address: "Davos, Switzerland",
+                website: "https://foreignpolicy.com/events/fp-davos-2026/"
+            },
+            // MEDIA & JOURNALISM
+            {
+                id: "WEF2026-025",
+                title: "Bloomberg at Davos 2026",
+                description: "Bloomberg's signature programming featuring interviews, panels, and networking at Bloomberg House.",
+                topics: ["Media", "Finance", "Markets", "Economics", "Global Business"],
+                location: "Davos",
+                venue: "Bloomberg House",
+                startTime: "2026-01-19 08:00",
+                endTime: "2026-01-23 19:00",
+                speakers: [],
+                capacity: 300,
+                track: "Media & Finance",
+                lat: 46.8012,
+                lon: 9.8362,
+                address: "Davos, Switzerland",
+                website: "https://events.bloomberglive.com/event/davos-2026/overview"
+            },
+            {
+                id: "WEF2026-032",
+                title: "Financial Times Davos",
+                description: "FT's signature programming and insights from Davos with leading voices in business and policy.",
+                topics: ["Media", "Finance", "Business", "Policy", "Journalism"],
+                location: "Davos",
+                venue: "FT Venue",
+                startTime: "2026-01-19 08:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 250,
+                track: "Media & Finance",
+                lat: 46.8025,
+                lon: 9.8355,
+                address: "Davos, Switzerland",
+                website: "https://ftdavos.live.ft.com/"
+            },
+            {
+                id: "WEF2026-033",
+                title: "WSJ Journal House",
+                description: "Wall Street Journal's exclusive content and networking during WEF week.",
+                topics: ["Media", "Finance", "Business", "Journalism", "Markets"],
+                location: "Davos",
+                venue: "WSJ Journal House",
+                startTime: "2026-01-19 08:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 200,
+                track: "Media & Finance",
+                lat: 46.8028,
+                lon: 9.8368,
+                address: "Davos, Switzerland",
+                website: "https://journalhouse.wsj.com/world-economic-forum/"
+            },
+            {
+                id: "WEF2026-029",
+                title: "Economist Impact Hub",
+                description: "The Economist's discussion hub featuring debates and insights on global economic and policy issues.",
+                topics: ["Economics", "Policy", "Global Issues", "Media", "Analysis"],
+                location: "Davos",
+                venue: "Economist Impact Hub",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 200,
+                track: "Media & Economics",
+                lat: 46.8008,
+                lon: 9.8352,
+                address: "Davos, Switzerland",
+                website: "https://events.economist.com/davos-hub/"
+            },
+            // REGIONAL HUBS
+            {
+                id: "WEF2026-020",
+                title: "Africa Collective Davos 2026",
+                description: "Week-long African presence at Davos showcasing the continent's innovation, investment opportunities, and growth stories.",
+                topics: ["Africa", "Investment", "Innovation", "Development", "Emerging Markets"],
+                location: "Tobelmühlestrasse 2",
+                venue: "Hard Rock Hotel Davos",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 20:00",
+                speakers: [],
+                capacity: 350,
+                track: "Emerging Markets",
+                lat: 46.7988,
+                lon: 9.8338,
+                address: "Tobelmühlestrasse 2, Davos Platz, 7270, Switzerland",
+                website: "https://africacollective.com/davos"
+            },
+            {
+                id: "WEF2026-028",
+                title: "Forbes Middle East Hub at Davos 2026",
+                description: "Forbes Middle East's presence showcasing MENA region innovation, investment, and leadership.",
+                topics: ["Middle East", "MENA", "Investment", "Innovation", "Media"],
+                location: "Promenade 121A",
+                venue: "Blumen & WohnWerke",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 180,
+                track: "Media & Investment",
+                lat: 46.8100,
+                lon: 9.8450,
+                address: "Promenade 121 A, Davos Dorf, 7260, Switzerland",
+                website: "https://forbesmiddleeastevents.com/forbes-middle-east-hub-at-davos-2026/"
+            },
+            {
+                id: "WEF2026-034",
+                title: "Finnish Flow",
+                description: "Finland's official presence showcasing Nordic innovation, sustainability, and business excellence.",
+                topics: ["Finland", "Nordic", "Innovation", "Sustainability", "Business"],
+                location: "Davos",
+                venue: "Finnish Flow Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 150,
+                track: "Innovation & Sustainability",
+                lat: 46.8035,
+                lon: 9.8372,
+                address: "Davos, Switzerland",
+                website: "https://www.finnishflow.com/"
+            },
+            // DIVERSITY & INCLUSION
+            {
+                id: "WEF2026-026",
+                title: "FQ Lounge @ Davos 2026",
+                description: "The Female Quotient's signature lounge advancing gender equality and women's leadership in business.",
+                topics: ["Gender Equality", "Women Leadership", "Diversity", "Inclusion", "Business"],
+                location: "Promenade 40",
+                venue: "FQ Lounge",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 150,
+                track: "Diversity & Inclusion",
+                lat: 46.7990,
+                lon: 9.8340,
+                address: "Promenade 40, Davos, 7270, Switzerland",
+                website: "https://events.thefemalequotient.com/davos26/invite"
+            },
+            {
+                id: "WEF2026-040",
+                title: "World Woman Davos 2026",
+                description: "Advancing women's leadership and gender equality in global business and policy.",
+                topics: ["Women Leadership", "Gender Equality", "Diversity", "Empowerment", "Policy"],
+                location: "Davos",
+                venue: "World Woman Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 250,
+                track: "Diversity & Inclusion",
+                lat: 46.8050,
+                lon: 9.8388,
+                address: "Davos, Switzerland",
+                website: "https://swiss-congress.ch/conferences/world-woman-davos-agenda-2026/"
+            },
+            // WELL-BEING & MINDFULNESS
+            {
+                id: "WEF2026-022",
+                title: "TPC House: East-West Bridge of Dialogue",
+                description: "An East-West Bridge of Dialogue for the Well-being Economy across two venues: Awakening House and Flourishing House.",
+                topics: ["Well-being Economy", "East-West Dialogue", "Mindfulness", "Sustainable Development", "Culture"],
+                location: "Promenade 45",
+                venue: "TPC House (Awakening House)",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 200,
+                track: "Well-being & Culture",
+                lat: 46.7993,
+                lon: 9.8343,
+                address: "Promenade 45 and Promenade 40, Davos, 7270, Switzerland",
+                website: "https://tpchouse.com"
+            },
+            // NETWORKING & EXCLUSIVE
+            {
+                id: "WEF2026-005",
+                title: "The Swedish Lunch",
+                description: "Private invitation-only gathering bringing together Nordic leaders and global influencers for intimate discussions during WEF.",
+                topics: ["Nordic Cooperation", "Leadership", "Private Networking", "Global Influence"],
+                location: "Promenade 63",
+                venue: "Schatzalp Hotel",
+                startTime: "2026-01-21 12:00",
+                endTime: "2026-01-21 15:00",
+                speakers: [],
+                capacity: 100,
+                track: "Exclusive Events",
+                lat: 46.8005,
+                lon: 9.8355,
+                address: "Promenade 63 Schatzalp Bahn, Davos, 7270, Switzerland",
+                website: "https://www.swedishlunch.com/"
+            },
+            {
+                id: "WEF2026-007",
+                title: "GLOBALS On Tour: Davos 2026",
+                description: "90-minute walking tour exploring Davos during WEF. Secret meeting point revealed upon confirmation.",
+                topics: ["Networking", "Walking Tour", "Global Community", "Exploration"],
+                location: "Davos",
+                venue: "Secret Location",
+                startTime: "2026-01-20 14:00",
+                endTime: "2026-01-20 15:30",
+                speakers: [],
+                capacity: 30,
+                track: "Networking",
+                lat: 46.8000,
+                lon: 9.8350,
+                address: "Secret Location, Davos, Switzerland",
+                website: "https://clubglobals.com/events-directory/globals-on-tour-davos-2/"
+            },
+            {
+                id: "WEF2026-027",
+                title: "Global Conversations Executive Lounge",
+                description: "High-level networking and dialogue during WEF. Wristband pick-up in Davos Platz district.",
+                topics: ["Executive Networking", "Global Dialogue", "Leadership", "Business"],
+                location: "Bahnhofstrasse 3",
+                venue: "Executive Lounge (The Flower Shop)",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 120,
+                track: "Networking",
+                lat: 46.7995,
+                lon: 9.8345,
+                address: "Bahnhofstrasse 3, Davos, 7270, Switzerland",
+                website: "https://www.globalconversations.ch/request-invitation"
+            },
+            // INDEPENDENT VENUES
+            {
+                id: "WEF2026-014",
+                title: "Davos Lodge",
+                description: "Independent hub not affiliated with WEF offering alternative perspectives and networking opportunities.",
+                topics: ["Alternative Perspectives", "Networking", "Independent Forum", "Dialogue"],
+                location: "Talstrasse 52",
+                venue: "Davos Lodge",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 20:00",
+                speakers: [],
+                capacity: 250,
+                track: "Independent Events",
+                lat: 46.8030,
+                lon: 9.8355,
+                address: "Talstrasse 52, Davos, 7270, Switzerland",
+                website: "https://www.davoslodge.com/"
+            },
+            // LEADERSHIP & CONSULTING
+            {
+                id: "WEF2026-013",
+                title: "Motwani Jadeja Global Leaders Program",
+                description: "Leadership program taking place at the sidelines of WEF 2026 for emerging global leaders.",
+                topics: ["Leadership", "Global Leaders", "Mentorship", "Networking", "Development"],
+                location: "Davos",
+                venue: "TBA",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 100,
+                track: "Leadership",
+                lat: 46.8015,
+                lon: 9.8360,
+                address: "Davos, Switzerland",
+                website: "https://mjf.world/davos/"
+            },
+            {
+                id: "WEF2026-036",
+                title: "Kearney at WEF",
+                description: "Global management consulting perspectives on strategy, operations, and transformation.",
+                topics: ["Consulting", "Strategy", "Operations", "Transformation", "Business"],
+                location: "Davos",
+                venue: "Kearney Venue",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 120,
+                track: "Business & Strategy",
+                lat: 46.8038,
+                lon: 9.8375,
+                address: "Davos, Switzerland",
+                website: "https://www.kearney.com/about/strategic-partnerships/world-economic-forum/"
+            },
+            // SCIENCE & RESEARCH
+            {
+                id: "WEF2026-041",
+                title: "Science House - Frontier Science",
+                description: "Exploring the frontiers of scientific discovery and their implications for society.",
+                topics: ["Science", "Research", "Innovation", "Discovery", "Technology"],
+                location: "Davos",
+                venue: "Science House",
+                startTime: "2026-01-19 09:00",
+                endTime: "2026-01-23 18:00",
+                speakers: [],
+                capacity: 180,
+                track: "Science & Research",
+                lat: 46.8052,
+                lon: 9.8390,
+                address: "Davos, Switzerland",
+                website: "https://sciencehouse.frontiersin.org/"
+            }
+        ];
+
+        // =============================================
+        // STATE
+        // =============================================
+        let map = null;
+        let markers = {};
+        let currentFilter = 'all';
+        let navigationLog = [];
+        let recommendedEvents = [];
+
+        // =============================================
+        // INITIALIZE
+        // =============================================
+        function init() {
+            initMap();
+            initFilters();
+            renderEvents(events);
+            updateStats();
+            logNavigation('App initialized', 'system');
+        }
+
+        // =============================================
+        // MAP
+        // =============================================
+        function initMap() {
+            // Initialize map centered on Davos
+            map = L.map('map', {
+                zoomControl: false
+            }).setView([46.8027, 9.8260], 14);
+
+            // Add zoom control to bottom right
+            L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+            // Add tile layer (dark theme)
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap, &copy; CartoDB',
+                maxZoom: 19
+            }).addTo(map);
+
+            // Add markers for each event
+            events.forEach(event => {
+                const marker = L.circleMarker([event.lat, event.lon], {
+                    radius: 10,
+                    fillColor: getTrackColor(event.track),
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9,
+                    className: 'custom-marker'
+                }).addTo(map);
+
+                marker.bindPopup(createPopupContent(event));
+                marker.on('click', () => {
+                    logNavigation(`Viewed: ${event.title}`, 'map');
+                    highlightEventCard(event.id);
+                });
+
+                markers[event.id] = marker;
+            });
+        }
+
+        function getTrackColor(track) {
+            const colors = {
+                'Technology & Innovation': '#06b6d4',
+                'Climate & Sustainability': '#10b981',
+                'Economy & Society': '#f59e0b',
+                'Finance & Technology': '#8b5cf6',
+                'Health & Wellbeing': '#f43f5e',
+                'Energy & Environment': '#84cc16',
+                'Technology & Security': '#6366f1'
+            };
+            return colors[track] || '#06b6d4';
+        }
+
+        function createPopupContent(event) {
+            const websiteLink = event.website 
+                ? `<a href="${event.website}" target="_blank" style="color: var(--aurora-cyan); text-decoration: none;">🔗 Visit Website</a>`
+                : '';
+            return `
+                <div class="popup-content">
+                    <div class="popup-title">${event.title}</div>
+                    <div class="popup-meta">
+                        📍 ${event.venue}<br>
+                        📌 ${event.address || event.location}<br>
+                        🕐 ${event.startTime}
+                    </div>
+                    <div class="popup-description">${event.description}</div>
+                    <div style="margin-top: 8px;">${websiteLink}</div>
+                </div>
+            `;
+        }
+
+        function flyToEvent(eventId) {
+            const event = events.find(e => e.id === eventId);
+            if (event) {
+                map.flyTo([event.lat, event.lon], 16, {
+                    duration: 1.5,
+                    easeLinearity: 0.25
+                });
+                markers[eventId].openPopup();
+                logNavigation(`Navigated to: ${event.title}`, 'navigation');
+            }
+        }
+
+        // =============================================
+        // FILTERS
+        // =============================================
+        function initFilters() {
+            const tracks = [...new Set(events.map(e => e.track))];
+            const container = document.getElementById('track-filters');
+            
+            tracks.forEach(track => {
+                const chip = document.createElement('span');
+                chip.className = 'chip';
+                chip.dataset.track = track;
+                chip.textContent = track.split(' ')[0]; // Short name
+                chip.onclick = () => setFilter(track);
+                container.appendChild(chip);
+            });
+        }
+
+        function setFilter(track) {
+            currentFilter = track;
+            
+            // Update chip states
+            document.querySelectorAll('.chip').forEach(chip => {
+                chip.classList.toggle('active', 
+                    (track === 'all' && chip.dataset.track === 'all') || 
+                    chip.dataset.track === track
+                );
+            });
+
+            const filtered = track === 'all' 
+                ? events 
+                : events.filter(e => e.track === track);
+            
+            renderEvents(filtered);
+            logNavigation(`Filtered by: ${track}`, 'filter');
+
+            // Update markers visibility
+            Object.keys(markers).forEach(id => {
+                const event = events.find(e => e.id === id);
+                if (track === 'all' || event.track === track) {
+                    markers[id].setStyle({ fillOpacity: 0.9 });
+                } else {
+                    markers[id].setStyle({ fillOpacity: 0.2 });
+                }
+            });
+        }
+
+        function filterEvents() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            
+            const filtered = events.filter(event => 
+                event.title.toLowerCase().includes(query) ||
+                event.description.toLowerCase().includes(query) ||
+                event.topics.some(t => t.toLowerCase().includes(query))
+            );
+
+            renderEvents(filtered);
+            if (query) {
+                logNavigation(`Searched: "${query}"`, 'search');
+            }
+        }
+
+        // =============================================
+        // LINKEDIN PROFILE PARSER
+        // =============================================
+        const LinkedInParser = {
+            SKILL_KEYWORDS: [
+                "AI", "artificial intelligence", "machine learning", "deep learning",
+                "blockchain", "crypto", "DeFi", "web3",
+                "climate", "sustainability", "ESG", "carbon", "renewable",
+                "finance", "investment", "banking", "fintech",
+                "healthcare", "biotech", "pharma", "health",
+                "policy", "governance", "regulation", "compliance",
+                "technology", "software", "engineering", "data",
+                "leadership", "strategy", "consulting", "management",
+                "energy", "oil", "gas", "solar", "wind",
+                "cybersecurity", "security", "privacy", "quantum",
+                "economics", "trade", "supply chain", "logistics"
+            ],
+
+            ROLE_INTERESTS: {
+                "ceo": ["leadership", "strategy", "governance"],
+                "cto": ["technology", "innovation", "AI"],
+                "cfo": ["finance", "investment", "capital"],
+                "scientist": ["research", "innovation", "data"],
+                "founder": ["entrepreneurship", "innovation", "startups"],
+                "investor": ["finance", "growth", "markets"],
+                "director": ["strategy", "leadership", "governance"],
+                "professor": ["research", "education", "academic"]
+            },
+
+            isLinkedInUrl(text) {
+                return /linkedin\.com\/in\/[\w-]+/i.test(text);
+            },
+
+            extractUsername(url) {
+                const match = url.match(/linkedin\.com\/in\/([\w-]+)/i);
+                return match ? match[1] : null;
+            },
+
+            generateDemoProfile(url) {
+                const username = this.extractUsername(url) || 'professional';
+                const name = username.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                let profile = {
+                    name: name,
+                    headline: "Senior Professional | Innovation & Strategy",
+                    skills: ["Strategy", "Innovation", "Leadership"],
+                    interests: ["Technology", "Climate", "Finance"],
+                    about: `Experienced leader focused on driving innovation and sustainable growth. Passionate about technology, climate action, and global cooperation.`
+                };
+
+                // Enhance based on username hints
+                const usernameLower = username.toLowerCase();
+                if (/climate|green|sustain|eco/.test(usernameLower)) {
+                    profile.skills.push("Climate Finance", "ESG", "Carbon Markets");
+                    profile.interests.push("Climate Action", "Renewable Energy");
+                    profile.about += " Deep expertise in climate technology and sustainability.";
+                }
+                if (/tech|ai|data|digital/.test(usernameLower)) {
+                    profile.skills.push("AI", "Machine Learning", "Digital Strategy");
+                    profile.interests.push("AI Governance", "Digital Innovation");
+                    profile.about += " Pioneer in AI and digital transformation.";
+                }
+                if (/health|med|bio|pharma/.test(usernameLower)) {
+                    profile.skills.push("Healthcare Innovation", "Biotech");
+                    profile.interests.push("Global Health", "Medical AI");
+                    profile.about += " Committed to advancing global health.";
+                }
+                if (/finance|invest|capital|bank/.test(usernameLower)) {
+                    profile.skills.push("Investment", "Capital Markets");
+                    profile.interests.push("Sustainable Finance", "DeFi");
+                    profile.about += " Expert in global finance and investment.";
+                }
+
+                return profile;
+            },
+
+            parseProfile(text) {
+                const textLower = text.toLowerCase();
+                const skills = this.SKILL_KEYWORDS.filter(s => textLower.includes(s.toLowerCase()));
+                const interests = [];
+                
+                Object.entries(this.ROLE_INTERESTS).forEach(([role, ints]) => {
+                    if (textLower.includes(role)) {
+                        interests.push(...ints);
+                    }
+                });
+
+                return {
+                    skills: [...new Set(skills)],
+                    interests: [...new Set(interests)],
+                    searchableText: text
+                };
+            },
+
+            getProfile(input) {
+                if (this.isLinkedInUrl(input)) {
+                    return {
+                        isLinkedIn: true,
+                        ...this.generateDemoProfile(input)
+                    };
+                }
+                return {
+                    isLinkedIn: false,
+                    ...this.parseProfile(input)
+                };
+            }
+        };
+
+        // =============================================
+        // RECOMMENDATIONS (Client-side TF-IDF simulation)
+        // =============================================
+        function getRecommendations() {
+            const linkedinUrl = document.getElementById('linkedin-input').value.trim();
+            const profileText = document.getElementById('profile-input').value.trim();
+            const statusEl = document.getElementById('linkedin-status');
+            
+            let profileData = null;
+            let searchText = '';
+
+            // Process LinkedIn URL first
+            if (linkedinUrl && LinkedInParser.isLinkedInUrl(linkedinUrl)) {
+                statusEl.className = 'linkedin-status processing';
+                statusEl.textContent = '🔄 Analyzing LinkedIn profile...';
+                
+                profileData = LinkedInParser.getProfile(linkedinUrl);
+                searchText = `${profileData.about} ${profileData.skills.join(' ')} ${profileData.interests.join(' ')}`;
+                
+                setTimeout(() => {
+                    statusEl.className = 'linkedin-status success';
+                    statusEl.innerHTML = `✅ Profile loaded: <strong>${profileData.name}</strong><br>
+                        Skills: ${profileData.skills.slice(0, 4).join(', ')}`;
+                }, 500);
+                
+                logNavigation(`LinkedIn profile: ${profileData.name}`, 'linkedin');
+            } else if (profileText) {
+                profileData = LinkedInParser.parseProfile(profileText);
+                searchText = profileText;
+                
+                if (profileData.skills.length > 0) {
+                    statusEl.className = 'linkedin-status success';
+                    statusEl.textContent = `🔍 Detected: ${profileData.skills.slice(0, 4).join(', ')}`;
+                } else {
+                    statusEl.textContent = '';
+                }
+            } else {
+                alert('Please enter your LinkedIn URL or profile description');
+                return;
+            }
+
+            logNavigation('Generating recommendations...', 'recommend');
+
+            // Simple TF-IDF simulation with enhanced profile
+            const profileTerms = searchText.toLowerCase().split(/\W+/).filter(t => t.length > 2);
+            
+            const scored = events.map(event => {
+                const eventText = `${event.title} ${event.description} ${event.topics.join(' ')}`.toLowerCase();
+                
+                // Calculate overlap score
+                let matchCount = 0;
+                let matchedTopics = [];
+                
+                profileTerms.forEach(term => {
+                    if (eventText.includes(term)) {
+                        matchCount++;
+                    }
+                });
+
+                event.topics.forEach(topic => {
+                    if (searchText.toLowerCase().includes(topic.toLowerCase().split(' ')[0])) {
+                        matchedTopics.push(topic);
+                    }
+                });
+
+                // Boost score if skills/interests match
+                if (profileData && profileData.skills) {
+                    profileData.skills.forEach(skill => {
+                        if (eventText.includes(skill.toLowerCase())) {
+                            matchCount += 3; // Boost for skill match
+                        }
+                    });
+                }
+
+                const score = (matchCount / Math.max(profileTerms.length, 1)) * 100;
+                
+                return {
+                    ...event,
+                    score: Math.min(score * 1.5, 98),
+                    matchedTopics
+                };
+            }).sort((a, b) => b.score - a.score);
+
+            recommendedEvents = scored.slice(0, 5);
+            renderEvents(recommendedEvents, true);
+            
+            // Highlight on map
+            Object.values(markers).forEach(m => m.setStyle({ fillOpacity: 0.2 }));
+            recommendedEvents.forEach(e => {
+                markers[e.id].setStyle({ fillOpacity: 1 });
+            });
+
+            // Fly to first recommendation
+            if (recommendedEvents.length > 0) {
+                flyToEvent(recommendedEvents[0].id);
+            }
+
+            const source = profileData?.isLinkedIn ? 'LinkedIn' : 'profile';
+            logNavigation(`Generated ${recommendedEvents.length} recommendations from ${source}`, 'recommend');
+        }
+
+        // =============================================
+        // RENDER
+        // =============================================
+        function renderEvents(eventList, showScores = false) {
+            const container = document.getElementById('event-list');
+            container.innerHTML = '';
+
+            eventList.forEach((event, idx) => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                card.id = `card-${event.id}`;
+                card.style.animationDelay = `${idx * 0.05}s`;
+                card.onclick = () => flyToEvent(event.id);
+
+                const scoreHtml = showScores && event.score 
+                    ? `<span class="event-score">${Math.round(event.score)}%</span>` 
+                    : '';
+
+                const websiteBtn = event.website 
+                    ? `<a href="${event.website}" target="_blank" class="event-link" onclick="event.stopPropagation()">🔗</a>` 
+                    : '';
+                
+                card.innerHTML = `
+                    <div class="event-header">
+                        <div class="event-title">${event.title}</div>
+                        ${scoreHtml}
+                        ${websiteBtn}
+                    </div>
+                    <div class="event-meta">
+                        <span>📍 ${event.venue}</span>
+                        <span>🕐 ${event.startTime.split(' ')[1]}</span>
+                        <span>👥 ${event.capacity}</span>
+                    </div>
+                    <div class="event-address">${event.address || event.location}</div>
+                    <span class="event-track">${event.track}</span>
+                    <p class="event-description">${event.description}</p>
+                `;
+
+                container.appendChild(card);
+            });
+
+            document.getElementById('visible-count').textContent = `${eventList.length} events`;
+        }
+
+        function highlightEventCard(eventId) {
+            document.querySelectorAll('.event-card').forEach(card => {
+                card.classList.remove('highlighted');
+            });
+            
+            const card = document.getElementById(`card-${eventId}`);
+            if (card) {
+                card.classList.add('highlighted');
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total-events').textContent = events.length;
+            document.getElementById('total-tracks').textContent = 
+                new Set(events.map(e => e.track)).size;
+            document.getElementById('total-venues').textContent = 
+                new Set(events.map(e => e.location)).size;
+        }
+
+        // =============================================
+        // NAVIGATION TRACKER
+        // =============================================
+        function logNavigation(action, type) {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+
+            const entry = { time, action, type, timestamp: now };
+            navigationLog.push(entry);
+
+            const container = document.getElementById('tracker-log');
+            const entryEl = document.createElement('div');
+            entryEl.className = 'tracker-entry';
+            entryEl.innerHTML = `
+                <span class="tracker-time">${time}</span>
+                ${action}
+            `;
+            
+            container.insertBefore(entryEl, container.firstChild);
+
+            // Keep only last 10 entries in UI
+            while (container.children.length > 10) {
+                container.removeChild(container.lastChild);
+            }
+        }
+
+        // =============================================
+        // KEYBOARD SHORTCUTS
+        // =============================================
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && !e.target.matches('input, textarea')) {
+                e.preventDefault();
+                document.getElementById('search-input').focus();
+            }
+        });
+
+        // =============================================
+        // INITIALIZE ON LOAD
+        // =============================================
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
