@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DAVOS 2026 | AI Event Navigator</title>
+    
+    <!-- Mapbox GL JS -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="logo">
+            <div class="logo-icon">🏔️</div>
+            <div class="logo-text">
+                <h1>DAVOS 2026</h1>
+                <span>AI Event Navigator</span>
+            </div>
+        </div>
+        <div class="header-stats">
+            <div class="stat">
+                <span class="stat-value" id="event-count">42</span>
+                <span class="stat-label">Events</span>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="venue-count">--</span>
+                <span class="stat-label">Venues</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Chat Panel -->
+        <aside class="chat-panel">
+            <!-- LinkedIn Input -->
+            <div class="input-section">
+                <label class="input-label">🔗 Your LinkedIn or Profile</label>
+                <div class="linkedin-wrapper">
+                    <span class="linkedin-badge">in</span>
+                    <input 
+                        type="text" 
+                        id="linkedin-input" 
+                        class="linkedin-input"
+                        placeholder="linkedin.com/in/yourname"
+                    >
+                </div>
+                
+                <div class="divider"><span>or describe yourself</span></div>
+                
+                <textarea 
+                    id="profile-input" 
+                    class="profile-textarea"
+                    placeholder="I'm a climate scientist interested in blockchain, sustainable finance, and international policy..."
+                ></textarea>
+                
+                <button id="recommend-btn" class="recommend-btn">
+                    ✨ Get AI Recommendations
+                </button>
+            </div>
+
+            <!-- AI Response -->
+            <div class="response-section" id="response-section">
+                <div class="ai-message" id="ai-message">
+                    <p>👋 Welcome to Davos 2026!</p>
+                    <p>Enter your LinkedIn URL or describe your interests to get personalized event recommendations.</p>
+                </div>
+            </div>
+
+            <!-- Recommendations List -->
+            <div class="recommendations-list" id="recommendations-list">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="filters-section">
+                <label class="input-label">🏷️ Quick Filters</label>
+                <div class="filter-chips" id="filter-chips">
+                    <button class="chip active" data-filter="all">All Events</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Map -->
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <!-- Map Controls -->
+            <div class="map-controls">
+                <button id="reset-view" class="map-btn" title="Reset View">🏠</button>
+                <button id="toggle-3d" class="map-btn" title="Toggle 3D">🎢</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="spinner"></div>
+        <p>Analyzing your profile...</p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
